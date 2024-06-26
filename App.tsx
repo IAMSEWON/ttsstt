@@ -1,45 +1,17 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
+import { useColorScheme } from 'nativewind';
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import { SafeAreaView, StatusBar, Text, View } from 'react-native';
+import Theme from './src/components/Theme';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const { colorScheme } = useColorScheme();
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <View className="bg-black">
-        <Text className="text-[#d9d9d9] font-semibold">집에가자</Text>
+    <SafeAreaView className="flex-1 bg-black dark:bg-white">
+      <StatusBar barStyle={colorScheme === 'light' ? 'light-content' : 'dark-content'} />
+      <View className="flex-1 items-center bg-black dark:bg-white">
+        <Theme />
       </View>
     </SafeAreaView>
   );
