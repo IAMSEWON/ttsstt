@@ -1,19 +1,27 @@
+import Theme from '@/components/Theme';
 import { useColorScheme } from 'nativewind';
 import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 
-import { SafeAreaView, StatusBar, Text, View } from 'react-native';
-import Theme from './src/components/Theme';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import { SafeAreaView, StatusBar, View } from 'react-native';
+
+import Home from '@/screens/Home';
+import Note from '@/screens/Note';
+
+const Stack = createNativeStackNavigator();
 
 function App(): React.JSX.Element {
   const { colorScheme } = useColorScheme();
 
   return (
-    <SafeAreaView className="flex-1 bg-black dark:bg-white">
-      <StatusBar barStyle={colorScheme === 'light' ? 'light-content' : 'dark-content'} />
-      <View className="flex-1 items-center bg-black dark:bg-white">
-        <Theme />
-      </View>
-    </SafeAreaView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Note" component={Note} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 export default App;

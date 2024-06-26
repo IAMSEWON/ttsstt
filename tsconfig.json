@@ -1,7 +1,7 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -21,7 +21,6 @@
         "name": "next"
       }
     ],
-    "root": ["./src"],
     "paths": {
       "@/*": ["./*"],
       "@/assets/*": ["assets/*"],
