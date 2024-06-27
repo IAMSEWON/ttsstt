@@ -4,16 +4,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import Tts from 'react-native-tts';
 
+import useTextToSpeech from '@/hooks/useTextToSpeech';
+
 const Note = () => {
   const insets = useSafeAreaInsets();
+  const {_play, _pause, _resume, _cancel, currentLocate, isPlaying
+    ,handlePlaying} = useTextToSpeech()
 
   const [titleText, setTitleText] = React.useState<string>('');
-  const [noteText, setNoteText] = React.useState<string>('');
+  const [noteText, setNoteText] = React.useState<string>('On some platforms it could take some time to initialize TTS engine, and Tts.speak() will fail to speak until the engine is ready.');
   const [showBottomMenu, setShowBottomMenu] = React.useState<boolean>(true);
   const [showBottomptions, setShowBottomOptions] = React.useState<boolean>(false);
   const bottomMenuOpacity = useSharedValue(1);
   const bottomOptionOpacity = useSharedValue(0.5);
-  const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
 
   const handleTitleInput = (text: string) => {
     setTitleText(text);
@@ -54,25 +57,21 @@ const Note = () => {
   // 재생/정지 상태값 변경
   const togglePlay = () => {
     if (isPlaying) {
-      setIsPlaying(false);
+      handlePlaying(false);
+      _pause();
+    } else {
+      handlePlaying(true);
       if (noteText.length > 0) {
-        _play(noteText);
+        if (currentLocate === 0){
+          _play(noteText);
+        } else {
+          _resume();
+        }
       } else {
         Alert.alert('내용을 입력해 주세요');
       }
-    } else {
-      setIsPlaying(true);
-      _stop();
     }
   };
-
-  // 음성읽기 시작
-  const _play = (text: string) => {
-    console.log('_play', _play);
-    Tts.speak(text);
-  };
-  // 음성읽기 시작
-  const _stop = () => {};
 
   const bottomMenuAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -84,6 +83,7 @@ const Note = () => {
       opacity: bottomOptionOpacity.value,
     };
   });
+  
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
@@ -219,7 +219,7 @@ const Note = () => {
               bottomMenuAnimatedStyle,
             ]}
           >
-            <View>
+            <View style={{flexDirection: 'row', gap: 10}}>
               <TouchableWithoutFeedback onPress={togglePlay}>
                 <View
                   style={{
@@ -231,7 +231,21 @@ const Note = () => {
                     backgroundColor: 'white',
                   }}
                 >
-                  <Text>재생</Text>
+                  <Text>{isPlaying ? '일시정지': '재생'}</Text>
+                </View>
+              </TouchableWithoutFeedback>
+              <TouchableWithoutFeedback onPress={_cancel}>
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 10,
+                    backgroundColor: 'white',
+                  }}
+                >
+                  <Text>취소</Text>
                 </View>
               </TouchableWithoutFeedback>
             </View>
