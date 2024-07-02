@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import Tts from 'react-native-tts';
+import { Play, Pause, EllipsisVertical, Square } from 'lucide-react-native';
+import moment from 'moment';
 
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 import KeyboardAvoidingComponent from '@/components/Note/KeyboardAvoidingComponent';
@@ -30,6 +31,8 @@ const Note = () => {
   const [titleText, setTitleText] = React.useState<string>('');
   // 내용 인풋 상태값
   const [noteText, setNoteText] = React.useState<string>(aaa);
+  // 작성일자
+  const [wirteDate, setWriteDate] = React.useState<Date>(new Date());
   // 바텀 기본 메뉴 표시 여부
   const [showBottomMenu, setShowBottomMenu] = React.useState<boolean>(true);
   // 바텀 옵션 클릭시 메뉴 표시 여부
@@ -38,12 +41,16 @@ const Note = () => {
   const [onFocusInput, setOnFocusInput] = React.useState<boolean>(false);
   // 제목,내용 인풋 포커싱 구분
   const [onFocusType, setOnFocusType] = React.useState<'TITLE' | 'NOTE'>('TITLE');
+  // 스크롤 중인지 여부
+  const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
+  // 포커스모드 여부
+  const [isFocusMode, setIsFocusMode] = React.useState<boolean>(false);
   // 노트 인풋 스크롤값
   const noteScrollOffsetValue = useSharedValue(1);
   // 바텀 기본 메뉴 투명도값
-  const bottomMenuOpacity = useSharedValue(1);
+  const bottomMenuOpacity = useSharedValue(110);
   // 바텀 옵션 클릭시 메뉴 투명도값
-  const bottomOptionOpacity = useSharedValue(0.5);
+  const bottomOptionOpacity = useSharedValue(110);
   // 바텀 기본 메뉴 투명도값
   const heightValue = useSharedValue(0);
 
@@ -68,11 +75,9 @@ const Note = () => {
 
   // 옵션 메뉴들 활성화
   const activeBottomMenuOptions = () => {
-    setShowBottomOptions(true);
-    bottomOptionOpacity.value = withTiming(1, { duration: 300 });
-    bottomMenuOpacity.value = withTiming(0, { duration: 400 });
+    setShowBottomMenu(false);
     setTimeout(() => {
-      setShowBottomMenu(false);
+      setShowBottomOptions(true);
     }, 300);
   };
 
@@ -80,11 +85,9 @@ const Note = () => {
   let autoHideOptionsTimeoutId: NodeJS.Timeout | null = null;
   const unActiveBottomMenuOptions = () => {
     autoHideOptionsTimeoutId = setTimeout(() => {
-      setShowBottomMenu(true);
-      bottomMenuOpacity.value = withTiming(1, { duration: 400 });
-      bottomOptionOpacity.value = withTiming(0, { duration: 300 });
+      setShowBottomOptions(false);
       setTimeout(() => {
-        setShowBottomOptions(false);
+        setShowBottomMenu(true);
       }, 400);
     }, 3000);
   };
@@ -124,14 +127,19 @@ const Note = () => {
     heightValue.value = 0;
   };
 
+  // 포커스 모드 전환
+  const handleFocusMode = () => {
+    setIsFocusMode((prev) => !prev);
+  };
+
   const bottomMenuAnimatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: bottomMenuOpacity.value,
+      top: `${bottomMenuOpacity.value}%`,
     };
   });
   const bottomOptionAnimatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: bottomOptionOpacity.value,
+      top: `${bottomOptionOpacity.value}%`,
     };
   });
 
@@ -149,6 +157,22 @@ const Note = () => {
   }, []);
 
   React.useEffect(() => {
+    if (showBottomMenu) {
+      bottomMenuOpacity.value = withTiming(95, { duration: 300 });
+    } else {
+      bottomMenuOpacity.value = withTiming(110);
+    }
+  }, [showBottomMenu]);
+
+  React.useEffect(() => {
+    if (showBottomptions) {
+      bottomOptionOpacity.value = withTiming(95, { duration: 300 });
+    } else {
+      bottomOptionOpacity.value = withTiming(110);
+    }
+  }, [showBottomptions]);
+
+  React.useEffect(() => {
     Keyboard.addListener('keyboardWillShow', show_KAC);
     Keyboard.addListener('keyboardWillHide', hide_KAC);
   }, []);
@@ -157,14 +181,20 @@ const Note = () => {
   const noteInputRef = React.useRef<TextInput>(null);
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <TouchableOpacity onPress={togglePlay} style={{ flex: 1 }}>
+    <View style={{ position: 'relative', flex: 1, width: '100%', height: '100%', paddingTop: insets.top }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps={'handled'}
+          onScrollBeginDrag={() => setIsScrolling(true)}
+          onScrollEndDrag={() => setIsScrolling(false)}
+          onMomentumScrollEnd={() => setIsScrolling(false)}
+        >
           <View style={{ flex: 1 }}>
-            <View
-              pointerEvents={!isPlaying ? undefined : 'none'}
-              style={{ borderBottomWidth: 1, borderBottomColor: '#999' }}
-            >
+            <View style={{ borderBottomWidth: 1, borderBottomColor: '#999' }}>
               <TextInput
                 ref={titleInputRef}
                 placeholder="제목..."
@@ -179,13 +209,12 @@ const Note = () => {
                 style={[{ paddingHorizontal: '5%', paddingVertical: '5%', fontSize: 24 }]}
               />
             </View>
-            <View pointerEvents={!isPlaying ? undefined : 'none'} style={{}}>
+            <View style={{}}>
               <TextInput
                 ref={noteInputRef}
                 placeholder="내용..."
                 value={noteText}
                 multiline
-                editable={!isPlaying}
                 onChangeText={handleNoteInput}
                 textAlignVertical="top"
                 onFocus={() => {
@@ -195,12 +224,13 @@ const Note = () => {
                 onBlur={() => {
                   handleOnFocusInput(false);
                 }}
-                // scrollEnabled={false}
+                editable={!isScrolling}
+                scrollEnabled={false}
                 style={{ padding: '5%', paddingBottom: SCREEN_HEIGHT / 3, fontSize: 18 }}
               />
             </View>
           </View>
-        </TouchableOpacity>
+        </ScrollView>
         <Animated.View
           style={[
             {
@@ -258,160 +288,140 @@ const Note = () => {
           </View>
         </Animated.View>
       </KeyboardAvoidingView>
-      <View
+      <Animated.View
         style={[
           {
             position: 'absolute',
-            bottom: insets.bottom + 10,
             left: '5%',
             right: '5%',
             height: 70,
+            padding: 10,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
             borderRadius: 14,
             backgroundColor: 'black',
+            gap: 10,
           },
+          bottomMenuAnimatedStyle,
         ]}
       >
-        {showBottomptions && (
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                padding: 10,
-                width: '100%',
-                flexDirection: 'row',
-                gap: 10,
-              },
-              bottomOptionAnimatedStyle,
-            ]}
+        <TouchableWithoutFeedback onPress={togglePlay}>
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 10,
+              backgroundColor: 'white',
+            }}
           >
-            <TouchableWithoutFeedback
-              onPress={() => {
-                console.log('.,;필터');
-              }}
-            >
-              <View
-                style={{
-                  width: 50,
-                  height: 50,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 10,
-                  backgroundColor: 'white',
-                }}
-              >
-                <Text>.,;필터</Text>
-              </View>
-            </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                console.log('공유');
-              }}
-            >
-              <View
-                style={{
-                  width: 50,
-                  height: 50,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 10,
-                  backgroundColor: 'white',
-                }}
-              >
-                <Text>공유</Text>
-              </View>
-            </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                console.log('포커스');
-              }}
-            >
-              <View
-                style={{
-                  width: 50,
-                  height: 50,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 10,
-                  backgroundColor: 'white',
-                }}
-              >
-                <Text>포커스</Text>
-              </View>
-            </TouchableWithoutFeedback>
-          </Animated.View>
-        )}
-        {showBottomMenu && (
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                padding: 10,
-                width: '100%',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                borderRadius: 14,
-                backgroundColor: 'black',
-              },
-              bottomMenuAnimatedStyle,
-            ]}
+            {isPlaying ? <Pause size={30} color={'black'} /> : <Play size={30} color={'black'} />}
+          </View>
+        </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={_cancel}>
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 10,
+              backgroundColor: 'white',
+            }}
           >
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableWithoutFeedback onPress={togglePlay}>
-                <View
-                  style={{
-                    width: 50,
-                    height: 50,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 10,
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <Text>{isPlaying ? '일시정지' : '재생'}</Text>
-                </View>
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback onPress={_cancel}>
-                <View
-                  style={{
-                    width: 50,
-                    height: 50,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 10,
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <Text>취소</Text>
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-            <View>
-              <TouchableWithoutFeedback onPress={clickShowOptions}>
-                <View
-                  style={{
-                    width: 50,
-                    height: 50,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 10,
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <Text>옵션</Text>
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </Animated.View>
-        )}
-      </View>
+            <Square size={24} color={'black'} />
+          </View>
+        </TouchableWithoutFeedback>
+        <View style={{ flex: 1, justifyContent: 'space-around' }}>
+          <Text style={{ color: 'white', fontSize: 23 }} numberOfLines={1}>
+            {titleText}
+          </Text>
+          <Text style={{ color: '#999' }} numberOfLines={1}>
+            {moment(wirteDate).format('YYYY.MM.DD')} / {noteText}
+          </Text>
+        </View>
+        <TouchableWithoutFeedback onPress={clickShowOptions}>
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 10,
+            }}
+          >
+            <EllipsisVertical size={30} color={'white'} />
+          </View>
+        </TouchableWithoutFeedback>
+      </Animated.View>
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            left: '5%',
+            right: '5%',
+            height: 70,
+            padding: 10,
+            flexDirection: 'row',
+            borderRadius: 14,
+            backgroundColor: 'black',
+            gap: 10,
+          },
+          bottomOptionAnimatedStyle,
+        ]}
+      >
+        <TouchableWithoutFeedback
+          onPress={() => {
+            console.log('.,;필터');
+          }}
+        >
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 10,
+              backgroundColor: 'white',
+            }}
+          >
+            <Text>.,;필터</Text>
+          </View>
+        </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            console.log('공유');
+          }}
+        >
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 10,
+              backgroundColor: 'white',
+            }}
+          >
+            <Text>공유</Text>
+          </View>
+        </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={handleFocusMode}>
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 10,
+              backgroundColor: 'white',
+            }}
+          >
+            <Text>포커스</Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </Animated.View>
     </View>
   );
 };
