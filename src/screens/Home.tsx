@@ -1,159 +1,184 @@
-import React, { useRef, useState } from 'react';
-import { Dimensions, FlatList, Pressable, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import BottomSheet from '@gorhom/bottom-sheet';
-import { CirclePlus, Moon, Sun } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  ColorSchemeName,
+  FlatList,
+  Modal,
+  Pressable,
+  SafeAreaView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { CirclePlus, Moon, Plus, SquarePen, Sun, Trash2, X } from 'lucide-react-native';
 
-import Carousel from '@/components/AnimatedTabBar';
+import SwipeItem from '@/components/SwipeItem';
 import useThemeContext from '@/hooks/useThemeContext';
-import { Colors } from '@/utils/color';
+import { getData, setData } from '@/utils/storage';
 
-type Category = { id: number; category: string };
+type Category = { id: number; check: boolean; category: string };
 
-const categorysData: Category[] = [
-  {
-    id: 0,
-    category: '여행',
-  },
-  {
-    id: 1,
-    category: '방송통신대학교방송통신대학교',
-  },
-  {
-    id: 2,
-    category: '공부',
-  },
-  {
-    id: 3,
-    category: '스포츠',
-  },
-  {
-    id: 4,
-    category: '음악',
-  },
-  {
-    id: 5,
-    category: '영화',
-  },
-  {
-    id: 6,
-    category: '독서',
-  },
-  {
-    id: 7,
-    category: '요리',
-  },
-  {
-    id: 8,
-    category: '쇼핑',
-  },
-];
-const screenWidth = Dimensions.get('window').width;
+const placeholderData = ['여행', '요리', '쇼핑', '회사', '공부'];
 
-const data: string[] = ['여행', '방송통신대학교', '공부', '스포츠', '음악', '영화', '독서', '요리', '쇼핑'];
-
-function Category({ colors }: { colors: Colors }) {
-  const [categorys, setCategorys] = useState<Category[]>(categorysData);
-  const flatListRef = useRef<FlatList>(null);
-
-  const [categoryIndex, setCategoryIndex] = useState<number>(0);
-
-  const itemWidth = 100; // 각 아이템의 가로 길이 (적절하게 조정 필요)
-  const gap = 10;
-
-  const [categoryWidth, setCategoryWidth] = useState<number[]>([]);
-
-  const [flatListWidth, setFlatListWidth] = useState(0);
-
-  const isSelectCategoryHandler = (id: number) => {
-    setCategorys(
-      categorys.map((category) => ({
-        ...category,
-        isSelected: category.id === id,
-      })),
-    );
-  };
-
-  const snapToInterval = gap + categoryWidth.slice(0, categoryIndex).reduce((acc, cur) => acc + cur, 0);
-
-  console.log('snapToInterval', snapToInterval);
-  // useEffect(() => {
-  //   if (!scrollViewWidth || categoryWidth.length < 1) return;
-
-  //   const selectedCategoryIndex = categorys.findIndex((item) => item.isSelected);
-  //   if (selectedCategoryIndex !== -1 && scrollViewRef.current) {
-  //     const itemWidth = categoryWidth.slice(0, selectedCategoryIndex).reduce((acc, cur) => acc + cur, 0);
-  //     // const itemWidth = categoryWidth[selectedCategoryIndex];
-
-  //     const offsetX = scrollViewWidth / 2 - itemWidth - gap;
-
-  //     // setScrollViewLeft(offsetX);
-  //     scrollViewRef.current.scrollTo({ x: offsetX, animated: true });
-  //   }
-  // }, [categorys, categoryWidth, scrollViewWidth]);
-
+function CategoryClose({ theme, onPress }: { theme: NonNullable<ColorSchemeName>; onPress: () => void }) {
   return (
-    <FlatList
-      ref={flatListRef}
-      horizontal
-      contentContainerStyle={{
-        paddingHorizontal: (screenWidth - flatListWidth) * 1.5 + gap / 2,
-        gap,
+    <View
+      style={{
+        flex: 0.1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginHorizontal: 4,
+        marginVertical: 8,
       }}
-      keyExtractor={(item) => `${item.id}`}
-      snapToInterval={gap + categoryWidth.slice(0, categoryIndex).reduce((acc, cur) => acc + cur, 0)}
-      showsHorizontalScrollIndicator={false}
-      data={categorysData}
-      onScroll={(event) => {
-        const isCategoryIndex = Math.round(event.nativeEvent.contentOffset.x / (flatListWidth + gap));
-
-        console.log(isCategoryIndex);
-        setCategoryIndex(isCategoryIndex);
-      }}
-      snapToAlignment="start"
-      pagingEnabled
-      onLayout={(event) => setFlatListWidth(event.nativeEvent.layout.width)}
-      decelerationRate="fast"
-      renderItem={({ item, index }) => {
-        return (
-          <TouchableOpacity
-            onPress={() => {
-              isSelectCategoryHandler(item.id);
-
-              // flatListRef.current?.scrollTo({ x: 250, animated: true });
-            }}
-            key={item.id}
-            onLayout={(event) => {
-              const arr = [...categoryWidth, event.nativeEvent.layout.width];
-              setCategoryWidth(arr);
-            }}
-            style={{ paddingTop: 8 }}
-          >
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: 'bold' }}>{item.category}</Text>
-            <LinearGradient
-              colors={['#f9ce34', '#ee2a7b', 'red']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[
-                item.id === categoryIndex && {
-                  width: '100%',
-                  height: 2,
-                  borderRadius: 10,
-                },
-                { marginTop: 4 },
-              ]}
-            />
-          </TouchableOpacity>
-        );
-      }}
-    />
+    >
+      <Pressable
+        style={{
+          width: 48,
+          height: 48,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onPress={onPress}
+      >
+        {theme === 'dark' ? <X size={32} color="white" /> : <X size={32} color="black" />}
+      </Pressable>
+    </View>
   );
 }
 
 function Home() {
-  const sheetRef = useRef<BottomSheet>(null);
+  const inputRef = useRef<TextInput>(null);
+  const swipeRef = useRef<Swipeable>(null);
 
-  const { colors, isSystemTheme, systemTheme, colorTheme, setColorTheme } = useThemeContext();
+  const [categorys, setCategorys] = useState<Category[]>([]);
+
+  const [updateCategoryId, setUpdateCategoryId] = useState<number>(0);
+
+  const [categoryValue, setCategoryValue] = useState<string>('');
+
+  const [isOpenCategory, setIsOpenCategory] = useState<boolean>(false);
+  const [isOpenCategoryForm, setIsOpenCategoryForm] = useState<boolean>(false);
+
+  const { colors, colorTheme, setColorTheme } = useThemeContext();
+
+  // 카테고리 선택
+  const onSelectCategory = (id: number) => {
+    setCategorys(
+      categorys.map((category) => ({
+        ...category,
+        check: category.id === id,
+      })),
+    );
+    setIsOpenCategory(false);
+  };
+
+  // 카테고리 삭제
+  const onDeleteCategory = async (id: number) => {
+    // 카테고리가 선택되어있으면 삭제 불가능
+    const isCheck = categorys.some((category) => category.id === id && category.check);
+
+    if (isCheck) {
+      Alert.alert('선택된 카테고리는 삭제할 수 없습니다.');
+      return;
+    }
+
+    Alert.alert('정말 삭제하시겠습니까?', '', [
+      {
+        text: '취소',
+        onPress: () => {
+          swipeRef.current?.close();
+        },
+        style: 'cancel',
+      },
+      {
+        text: '삭제',
+        onPress: async () => {
+          const updateCategorys = categorys.filter((category) => category.id !== id);
+
+          setCategorys(updateCategorys);
+          swipeRef.current?.close();
+        },
+      },
+    ]);
+  };
+
+  // 카테고리 수정 폼 열기
+  const onModifyCategory = (id: number, category: string) => {
+    setUpdateCategoryId(id);
+    setIsOpenCategoryForm(true);
+    setCategoryValue(category);
+  };
+
+  // 카테고리 추가
+  const onAddCategory = async () => {
+    if (!categoryValue) {
+      Alert.alert('카테고리를 입력해주세요.');
+      return;
+    }
+
+    // 카테고리 데이터 텍스트 수정
+    if (updateCategoryId) {
+      const updateCategorys = categorys.map((category) => {
+        if (category.id === updateCategoryId) {
+          return {
+            ...category,
+            category: categoryValue,
+          };
+        }
+        return category;
+      });
+
+      await setData('categorys', updateCategorys);
+
+      setCategorys(updateCategorys);
+      setIsOpenCategoryForm(!isOpenCategoryForm);
+      setCategoryValue('');
+      setUpdateCategoryId(0);
+    } else {
+      const isSameCategory = categorys.some((category) => category.category === categoryValue);
+
+      if (isSameCategory) {
+        Alert.alert('이미 존재하는 카테고리입니다.');
+        inputRef.current?.focus();
+        return;
+      }
+
+      const id = categorys.length ? categorys[categorys.length - 1].id + 1 : 1;
+
+      const check = categorys.length === 0;
+
+      const updateCategorys = [
+        ...categorys,
+        {
+          id,
+          check,
+          category: categoryValue,
+        },
+      ];
+
+      await setData('categorys', updateCategorys);
+
+      setCategorys(updateCategorys);
+      setIsOpenCategoryForm(!isOpenCategoryForm);
+      setCategoryValue('');
+    }
+    swipeRef.current?.close();
+  };
+
+  // 초기화 함수
+  const init = async () => {
+    const categorysStorage: Category[] | null = await getData('categorys');
+
+    if (!categorysStorage) return;
+
+    setCategorys(categorysStorage);
+  };
+
+  useEffect(() => {
+    init();
+  }, []);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -166,44 +191,156 @@ function Home() {
           gap: 8,
         }}
       >
-        <Pressable onPress={() => console.log('hi')}>
+        <Pressable onPress={() => setIsOpenCategory(true)}>
           <CirclePlus size={27} color={colors.text} />
         </Pressable>
         {/* <Category colors={colors} /> */}
         <Pressable onPress={() => setColorTheme(colorTheme === 'dark' ? 'light' : 'dark')}>
           {colorTheme === 'dark' ? <Sun size={27} color="white" /> : <Moon size={27} color="black" />}
         </Pressable>
-        {/* <ActionSheet ref={sheetRef} /> */}
+
+        <Modal
+          animationType="slide"
+          visible={isOpenCategory}
+          onRequestClose={() => {
+            setIsOpenCategory(!isOpenCategory);
+          }}
+          presentationStyle="pageSheet"
+        >
+          <View style={{ flex: 1, backgroundColor: colors.background, paddingBottom: 40 }}>
+            {/* 모달 카테고리 닫기 버튼 */}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                marginHorizontal: 4,
+                marginVertical: 8,
+              }}
+            >
+              <CategoryClose theme={colorTheme} onPress={() => setIsOpenCategory(!isOpenCategory)} />
+            </View>
+            {/* 모달 카테고리 추가 버튼 */}
+            <View
+              style={{
+                marginHorizontal: 20,
+              }}
+            >
+              <SwipeItem
+                value="새로운 카테고리"
+                onPress={() => {
+                  setIsOpenCategoryForm(true);
+                }}
+                icon={<Plus size={32} color="white" />}
+              />
+            </View>
+            {/* 모달 카테고리 리스트 */}
+            <FlatList
+              data={categorys}
+              contentContainerStyle={{
+                marginHorizontal: 20,
+                marginBottom: 20,
+              }}
+              keyExtractor={(item) => `${item.id}`}
+              renderItem={({ item }) => {
+                return (
+                  <SwipeItem
+                    ref={swipeRef}
+                    value={item.category}
+                    check={item.check}
+                    onPress={() => {
+                      onSelectCategory(item.id);
+                    }}
+                    style={{ backgroundColor: colors.background }}
+                    leftSide={
+                      <TouchableOpacity
+                        style={{
+                          width: 60,
+                          backgroundColor: 'white',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        onPress={() => onDeleteCategory(item.id)}
+                      >
+                        <Trash2 size={24} color="black" />
+                      </TouchableOpacity>
+                    }
+                    rightSide={
+                      <TouchableOpacity
+                        style={{
+                          width: 60,
+                          backgroundColor: 'white',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        onPress={() => onModifyCategory(item.id, item.category)}
+                      >
+                        <SquarePen size={24} color="black" />
+                      </TouchableOpacity>
+                    }
+                  />
+                );
+              }}
+            />
+          </View>
+          {/* 모달 카테고리 추가 폼 */}
+          <Modal
+            animationType="slide"
+            visible={isOpenCategoryForm}
+            onRequestClose={() => {
+              setCategoryValue('');
+              setIsOpenCategoryForm(!isOpenCategoryForm);
+            }}
+            presentationStyle="pageSheet"
+          >
+            <View style={{ flex: 1, backgroundColor: '#3b3b3b' }}>
+              {/* 모달 카테고리 닫기 버튼 */}
+              <View
+                style={{
+                  flex: 0.1,
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                  marginHorizontal: 4,
+                  marginVertical: 8,
+                }}
+              >
+                <CategoryClose theme={colorTheme} onPress={() => setIsOpenCategoryForm(false)} />
+              </View>
+              <View style={{ flex: 1, alignItems: 'center', gap: 20 }}>
+                <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold' }}>새로운 카테고리 시작</Text>
+                <Text style={{ color: '#f1f3f520', fontSize: 21, fontWeight: 'bold' }}>
+                  명확하고 간단한 단어를 입력하세요.
+                </Text>
+                <View style={{ flex: 1, width: 250, marginHorizontal: 40, alignItems: 'center' }}>
+                  <TextInput
+                    ref={inputRef}
+                    style={{ fontSize: 30, width: '100%', fontWeight: 'bold', color: 'white', textAlign: 'center' }}
+                    value={categoryValue}
+                    onChangeText={(text) => {
+                      setCategoryValue(text.replace(/(\s*)/g, ''));
+                    }}
+                    placeholder={placeholderData[0]}
+                    placeholderTextColor="#f1f3f530"
+                    returnKeyType="done"
+                    autoFocus
+                    onSubmitEditing={onAddCategory}
+                  />
+                  {!categoryValue &&
+                    placeholderData
+                      .filter((item, index) => index > 0)
+                      .map((item) => {
+                        return (
+                          <Text key={item} style={{ fontSize: 30, color: '#f1f3f530', fontWeight: 'bold' }}>
+                            {item}
+                          </Text>
+                        );
+                      })}
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </Modal>
       </View>
-      <Carousel
-        gap={16}
-        offset={36}
-        pages={[
-          {
-            num: 1,
-            color: '#86E3CE',
-          },
-          {
-            num: 2,
-            color: '#D0E6A5',
-          },
-          {
-            num: 3,
-            color: '#FFDD94',
-          },
-          {
-            num: 4,
-            color: '#FA897B',
-          },
-          {
-            num: 5,
-            color: '#CCABD8',
-          },
-        ]}
-        pageWidth={screenWidth - (16 + 36) * 2}
-      />
     </SafeAreaView>
   );
 }
-
 export default Home;
