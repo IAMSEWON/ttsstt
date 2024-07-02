@@ -22,6 +22,9 @@ module.exports = {
   "rules": {
     "react/react-in-jsx-scope": "off",
     "no-var": "error", // var 금지
+    "import/extensions": "off", // import 시 확장자명 제거
+    "react/jsx-props-no-spreading":"off", // props spreading 허용
+    "react/require-default-props":"off", // default props 필수 제거
     "prettier/prettier": "error", // Prettier 규칙 위반을 ESLint 오류로 처리합니다.
     "no-console": "warn", // 콘솔 로그 사용 시 경고를 표시합니다.
     "func-names": "off", // 익명 함수에 대한 제한을 비활성화합니다.
