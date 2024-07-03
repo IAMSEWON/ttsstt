@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Play, Pause, EllipsisVertical, Square, Fullscreen, Share2, Filter } from 'lucide-react-native';
 import moment from 'moment';
+import Share from 'react-native-share';
 
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 import KeyboardAvoidingComponent from '@/components/Note/KeyboardAvoidingComponent';
@@ -136,6 +137,16 @@ const Note = () => {
     setIsFocusMode((prev) => !prev);
   };
 
+  // 공유 버튼 클릭
+  const openShare = () => {
+    Share.open({
+      title: titleText,
+      message: noteText,
+    }).then((res) => {
+      console.log('res', res);
+    });
+  };
+
   const titleInputAnimatedStyle = useAnimatedStyle(() => {
     return {
       height: headerPaddingValue.value,
@@ -236,7 +247,6 @@ const Note = () => {
             setScrollEndY(e.nativeEvent.contentOffset.y);
           }}
           onMomentumScrollEnd={(e) => {
-            console.log('onMomentumScrollEnd');
             setIsScrolling(false);
           }}
         >
@@ -430,17 +440,14 @@ const Note = () => {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 10,
-              backgroundColor: 'white',
+              backgroundColor: '#aaa',
+              // backgroundColor: 'white',
             }}
           >
             <Filter size={26} color={'black'} />
           </View>
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback
-          onPress={() => {
-            console.log('공유');
-          }}
-        >
+        <TouchableWithoutFeedback onPress={openShare}>
           <View
             style={{
               width: 50,
