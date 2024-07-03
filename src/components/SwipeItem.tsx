@@ -1,12 +1,12 @@
 import React, { ForwardedRef, forwardRef, useState } from 'react';
-import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, Text, View, ViewStyle } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
 const SwipeItem = forwardRef(
   (
     {
       value,
-      onPress,
+      drag,
       check = false,
       leftSide,
       rightSide,
@@ -14,7 +14,7 @@ const SwipeItem = forwardRef(
       icon,
     }: {
       value: string;
-      onPress: () => void;
+      drag?: boolean;
       check?: boolean;
       icon?: React.ReactNode;
       leftSide?: React.ReactNode;
@@ -32,10 +32,21 @@ const SwipeItem = forwardRef(
         onSwipeableClose={() => setIsSwipe('default')}
         overshootLeft={false}
         overshootRight={false}
-        renderLeftActions={() => leftSide && leftSide}
-        renderRightActions={() => rightSide && rightSide}
+        renderLeftActions={() => {
+          if (drag) {
+            return false;
+          }
+          return leftSide && leftSide;
+        }}
+        renderRightActions={() => {
+          if (drag) {
+            return false;
+          }
+
+          return rightSide && rightSide;
+        }}
       >
-        <Pressable
+        <View
           style={[
             style,
             {
@@ -47,16 +58,15 @@ const SwipeItem = forwardRef(
               alignItems: 'center',
             },
           ]}
-          onPress={onPress}
         >
-          <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold', marginHorizontal: 10 }}>{value}</Text>
+          <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold', marginLeft: 10 }}>{value}</Text>
           {icon || (
             <View
               style={{
                 backgroundColor: 'white',
                 width: 24,
                 height: 24,
-                marginRight: 5,
+                marginRight: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -64,7 +74,7 @@ const SwipeItem = forwardRef(
               <View style={{ width: 16, height: 16, backgroundColor: check ? 'black' : 'transparent' }} />
             </View>
           )}
-        </Pressable>
+        </View>
       </Swipeable>
     );
   },
