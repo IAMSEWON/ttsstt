@@ -52,7 +52,7 @@ const Note = () => {
   // 스크롤 터치 종료 시 y값
   const [scrollEndY, setScrollEndY] = React.useState<number>(0);
   // 탑 패딩 값
-  const titleInputHeight = useSharedValue(insets.top + 70);
+  const headerPaddingValue = useSharedValue(insets.top);
   // 바텀 기본 메뉴 투명도값
   const bottomMenuTop = useSharedValue(110);
   // 바텀 옵션 클릭시 메뉴 투명도값
@@ -138,7 +138,7 @@ const Note = () => {
 
   const titleInputAnimatedStyle = useAnimatedStyle(() => {
     return {
-      height: titleInputHeight.value,
+      height: headerPaddingValue.value,
     };
   });
   const bottomMenuAnimatedStyle = useAnimatedStyle(() => {
@@ -192,13 +192,13 @@ const Note = () => {
   // 포커스 모드 토글 시 처리
   React.useEffect(() => {
     if (isFocusMode) {
-      titleInputHeight.value = withTiming(0, { duration: 400 });
+      headerPaddingValue.value = withTiming(0, { duration: 400 });
       StatusBar.setHidden(true, 'fade');
       if (autoHideOptionsTimeoutId) clearTimeout(autoHideOptionsTimeoutId);
       setShowBottomMenu(false);
       setShowBottomOptions(false);
     } else {
-      titleInputHeight.value = withTiming(70 + insets.top, { duration: 400 });
+      headerPaddingValue.value = withTiming(insets.top, { duration: 400 });
       StatusBar.setHidden(false, 'fade');
       setShowBottomMenu(true);
     }
@@ -224,6 +224,7 @@ const Note = () => {
         // keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         style={{ flex: 1 }}
       >
+        <Animated.View style={titleInputAnimatedStyle} />
         <ScrollView
           keyboardShouldPersistTaps={'handled'}
           onScrollBeginDrag={(e) => {
@@ -239,13 +240,8 @@ const Note = () => {
             setIsScrolling(false);
           }}
         >
-          <View style={{ flex: 1 }}>
-            <Animated.View
-              style={[
-                { justifyContent: 'flex-end', borderBottomWidth: 1, borderBottomColor: '#999' },
-                titleInputAnimatedStyle,
-              ]}
-            >
+          <Animated.View style={{ flex: 1 }}>
+            <Animated.View style={{ borderBottomWidth: 1, borderBottomColor: '#999' }}>
               <TextInput
                 ref={titleInputRef}
                 placeholder="제목..."
@@ -280,7 +276,7 @@ const Note = () => {
                 style={{ padding: '5%', paddingBottom: SCREEN_HEIGHT / 3, fontSize: 18 }}
               />
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
         <Animated.View
           style={[
