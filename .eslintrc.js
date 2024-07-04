@@ -22,6 +22,7 @@ module.exports = {
   "rules": {
     "react/react-in-jsx-scope": "off",
     "no-var": "error", // var 금지
+    "@typescript-eslint/no-use-before-define": "off", // 선언 전 사용 허용
     "import/extensions": "off", // import 시 확장자명 제거
     "react/jsx-props-no-spreading":"off", // props spreading 허용
     "react/require-default-props":"off", // default props 필수 제거
