@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { CirclePlus, Moon, Sun } from 'lucide-react-native';
 
-import Carousel from '@/components/Carousel';
+import Carousel from '@/components/Home/Carousel.tsx';
 import useThemeContext from '@/hooks/useThemeContext.ts';
 import { Category } from '@/types/category.ts';
 
@@ -16,6 +16,7 @@ function CategoryHeader({ onOpenCategory, categorys }: { onOpenCategory: () => v
         justifyContent: 'space-between',
         flexDirection: 'row',
         gap: 8,
+        paddingVertical: 10,
       }}
     >
       <Pressable onPress={onOpenCategory}>
