@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView } from 'react-native';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import CategoryHeader from '@/components/Home/CategoryHeader.tsx';
+import CategoryList from '@/components/Home/CategoryList.tsx';
+import CategoryModal from '@/components/Home/CategoryModal.tsx';
 import useThemeContext from '@/hooks/useThemeContext.ts';
-import CategoryHeader from '@/screens/Home/CategoryHeader.tsx';
-import CategoryModal from '@/screens/Home/CategoryModal.tsx';
 import { Category } from '@/types/category.ts';
 import { getData } from '@/utils/storage.ts';
 
 function Home() {
+  const { top } = useSafeAreaInsets();
+
   const [categorys, setCategorys] = useState<Category[]>([]);
 
   const [isOpenCategory, setIsOpenCategory] = useState<boolean>(false);
@@ -28,15 +32,16 @@ function Home() {
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, paddingTop: top, backgroundColor: colors.background }}>
       <CategoryHeader onOpenCategory={() => setIsOpenCategory(true)} categorys={categorys} />
+      <CategoryList />
       <CategoryModal
         open={isOpenCategory}
         setOpen={setIsOpenCategory}
         setCategorys={setCategorys}
         categorys={categorys}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 export default Home;

@@ -248,7 +248,9 @@ function CategoryModal({
                   >
                     <TouchableOpacity onLongPress={drag} disabled={isActive}>
                       <SwipeItem
-                        ref={(ref) => (swipeRef.current[item.id] = ref)}
+                        ref={(ref) => {
+                          swipeRef.current[item.id] = ref;
+                        }}
                         drag={isDrag}
                         value={item.category}
                         check={item.check}
@@ -301,7 +303,7 @@ function CategoryModal({
         }}
         presentationStyle="pageSheet"
       >
-        <View style={{ flex: 1, backgroundColor: '#3b3b3b' }}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
           {/* 모달 카테고리 닫기 버튼 */}
           <View
             style={{

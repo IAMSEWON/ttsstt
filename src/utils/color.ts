@@ -6,6 +6,7 @@ export type Colors = {
   text: string;
   textAccent: string;
   background: string;
+  cardBackground: string;
   bottomSheetBackground: string;
 };
 
@@ -13,13 +14,15 @@ export const light: Colors = {
   text: '#222',
   textAccent: '#444',
   background: '#fff',
+  cardBackground: '#fff',
   bottomSheetBackground: '#f5f5f5',
 };
 
 export const dark: Colors = {
   text: '#fff',
   textAccent: '#ccc',
-  background: '#3b3b3b',
+  background: '#201d2b',
+  cardBackground: '#272636',
   bottomSheetBackground: '#2c2c2c',
 };
 
