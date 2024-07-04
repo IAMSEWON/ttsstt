@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,13 +16,15 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { Play, Pause, EllipsisVertical, Square } from 'lucide-react-native';
+import { Play, Pause, EllipsisVertical, Square, Fullscreen, Share2, Filter } from 'lucide-react-native';
 import moment from 'moment';
+import Share from 'react-native-share';
 
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 import KeyboardAvoidingComponent from '@/components/Note/KeyboardAvoidingComponent';
 
 const SCREEN_HEIGHT = Dimensions.get('screen').height;
+let autoHideOptionsTimeoutId: NodeJS.Timeout | null = null;
 
 const Note = () => {
   const insets = useSafeAreaInsets();
@@ -45,12 +48,16 @@ const Note = () => {
   const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
   // 포커스모드 여부
   const [isFocusMode, setIsFocusMode] = React.useState<boolean>(false);
-  // 노트 인풋 스크롤값
-  const noteScrollOffsetValue = useSharedValue(1);
+  // 스크롤 터치 시작 시 y값
+  const [scrollBeginY, setScrollBeginY] = React.useState<number>(0);
+  // 스크롤 터치 종료 시 y값
+  const [scrollEndY, setScrollEndY] = React.useState<number>(0);
+  // 탑 패딩 값
+  const headerPaddingValue = useSharedValue(insets.top);
   // 바텀 기본 메뉴 투명도값
-  const bottomMenuOpacity = useSharedValue(110);
+  const bottomMenuTop = useSharedValue(110);
   // 바텀 옵션 클릭시 메뉴 투명도값
-  const bottomOptionOpacity = useSharedValue(110);
+  const bottomOptionTop = useSharedValue(110);
   // 바텀 기본 메뉴 투명도값
   const heightValue = useSharedValue(0);
 
@@ -78,11 +85,10 @@ const Note = () => {
     setShowBottomMenu(false);
     setTimeout(() => {
       setShowBottomOptions(true);
-    }, 300);
+    }, 400);
   };
 
   // 옵션 메뉴들 3초후 비활성화
-  let autoHideOptionsTimeoutId: NodeJS.Timeout | null = null;
   const unActiveBottomMenuOptions = () => {
     autoHideOptionsTimeoutId = setTimeout(() => {
       setShowBottomOptions(false);
@@ -116,30 +122,44 @@ const Note = () => {
       }
     }
   };
-
   // 컴포넌트 표시
-  const show_KAC = () => {
+  const show_KAC = React.useCallback(() => {
     heightValue.value = withDelay(150, withTiming(40, { duration: 200 }));
-  };
+  }, []);
 
   // 컴포넌트 숨기기
-  const hide_KAC = () => {
+  const hide_KAC = React.useCallback(() => {
     heightValue.value = 0;
-  };
+  }, []);
 
   // 포커스 모드 전환
   const handleFocusMode = () => {
     setIsFocusMode((prev) => !prev);
   };
 
+  // 공유 버튼 클릭
+  const openShare = () => {
+    Share.open({
+      title: titleText,
+      message: noteText,
+    }).then((res) => {
+      console.log('res', res);
+    });
+  };
+
+  const titleInputAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      height: headerPaddingValue.value,
+    };
+  });
   const bottomMenuAnimatedStyle = useAnimatedStyle(() => {
     return {
-      top: `${bottomMenuOpacity.value}%`,
+      top: `${bottomMenuTop.value}%`,
     };
   });
   const bottomOptionAnimatedStyle = useAnimatedStyle(() => {
     return {
-      top: `${bottomOptionOpacity.value}%`,
+      top: `${bottomOptionTop.value}%`,
     };
   });
 
@@ -156,45 +176,82 @@ const Note = () => {
     };
   }, []);
 
+  // 기본 바템메뉴 토글 (재생,정지,제목 등)
   React.useEffect(() => {
     if (showBottomMenu) {
-      bottomMenuOpacity.value = withTiming(95, { duration: 300 });
+      bottomMenuTop.value = withTiming(87, { duration: 400 });
     } else {
-      bottomMenuOpacity.value = withTiming(110);
+      bottomMenuTop.value = withTiming(110);
     }
   }, [showBottomMenu]);
 
+  // 옵션 바템메뉴 토글 (필터,공유,포커스)
   React.useEffect(() => {
     if (showBottomptions) {
-      bottomOptionOpacity.value = withTiming(95, { duration: 300 });
+      bottomOptionTop.value = withTiming(87, { duration: 400 });
     } else {
-      bottomOptionOpacity.value = withTiming(110);
+      bottomOptionTop.value = withTiming(110);
     }
   }, [showBottomptions]);
 
+  // 키보드 토글 시 키보드컴포넌트 토글
   React.useEffect(() => {
     Keyboard.addListener('keyboardWillShow', show_KAC);
     Keyboard.addListener('keyboardWillHide', hide_KAC);
   }, []);
 
+  // 포커스 모드 토글 시 처리
+  React.useEffect(() => {
+    if (isFocusMode) {
+      headerPaddingValue.value = withTiming(0, { duration: 400 });
+      StatusBar.setHidden(true, 'fade');
+      if (autoHideOptionsTimeoutId) clearTimeout(autoHideOptionsTimeoutId);
+      setShowBottomMenu(false);
+      setShowBottomOptions(false);
+    } else {
+      headerPaddingValue.value = withTiming(insets.top, { duration: 400 });
+      StatusBar.setHidden(false, 'fade');
+      setShowBottomMenu(true);
+    }
+  }, [isFocusMode]);
+
+  // 스크롤 터치 종료 시, 터치 시작 값보다 높으면 포커스모드 실행
+  React.useEffect(() => {
+    if (scrollBeginY < scrollEndY && !isFocusMode) {
+      setIsFocusMode(true);
+    }
+    if (scrollBeginY > scrollEndY && isFocusMode) {
+      setIsFocusMode(false);
+    }
+  }, [scrollEndY]);
+
   const titleInputRef = React.useRef<TextInput>(null);
   const noteInputRef = React.useRef<TextInput>(null);
 
   return (
-    <View style={{ position: 'relative', flex: 1, width: '100%', height: '100%', paddingTop: insets.top }}>
+    <View style={{ position: 'relative', flex: 1, width: '100%', height: '100%' }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         // keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         style={{ flex: 1 }}
       >
+        <Animated.View style={titleInputAnimatedStyle} />
         <ScrollView
           keyboardShouldPersistTaps={'handled'}
-          onScrollBeginDrag={() => setIsScrolling(true)}
-          onScrollEndDrag={() => setIsScrolling(false)}
-          onMomentumScrollEnd={() => setIsScrolling(false)}
+          onScrollBeginDrag={(e) => {
+            setIsScrolling(true);
+            setScrollBeginY(e.nativeEvent.contentOffset.y);
+          }}
+          onScrollEndDrag={(e) => {
+            setIsScrolling(false);
+            setScrollEndY(e.nativeEvent.contentOffset.y);
+          }}
+          onMomentumScrollEnd={(e) => {
+            setIsScrolling(false);
+          }}
         >
-          <View style={{ flex: 1 }}>
-            <View style={{ borderBottomWidth: 1, borderBottomColor: '#999' }}>
+          <Animated.View style={{ flex: 1 }}>
+            <Animated.View style={{ borderBottomWidth: 1, borderBottomColor: '#999' }}>
               <TextInput
                 ref={titleInputRef}
                 placeholder="제목..."
@@ -206,9 +263,9 @@ const Note = () => {
                 }}
                 onBlur={() => handleOnFocusInput(false)}
                 editable={!isPlaying}
-                style={[{ paddingHorizontal: '5%', paddingVertical: '5%', fontSize: 24 }]}
+                style={{ paddingHorizontal: '5%', paddingVertical: '5%', fontSize: 24 }}
               />
-            </View>
+            </Animated.View>
             <View style={{}}>
               <TextInput
                 ref={noteInputRef}
@@ -229,7 +286,7 @@ const Note = () => {
                 style={{ padding: '5%', paddingBottom: SCREEN_HEIGHT / 3, fontSize: 18 }}
               />
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
         <Animated.View
           style={[
@@ -316,7 +373,7 @@ const Note = () => {
               backgroundColor: 'white',
             }}
           >
-            {isPlaying ? <Pause size={30} color={'black'} /> : <Play size={30} color={'black'} />}
+            {isPlaying ? <Pause size={30} color={'black'} /> : <Play size={28} color={'black'} />}
           </View>
         </TouchableWithoutFeedback>
         <TouchableWithoutFeedback onPress={_cancel}>
@@ -330,7 +387,7 @@ const Note = () => {
               backgroundColor: 'white',
             }}
           >
-            <Square size={24} color={'black'} />
+            <Square size={24} color={'black'} fill={'black'} />
           </View>
         </TouchableWithoutFeedback>
         <View style={{ flex: 1, justifyContent: 'space-around' }}>
@@ -351,7 +408,7 @@ const Note = () => {
               borderRadius: 10,
             }}
           >
-            <EllipsisVertical size={30} color={'white'} />
+            <EllipsisVertical size={28} color={'white'} />
           </View>
         </TouchableWithoutFeedback>
       </Animated.View>
@@ -383,17 +440,14 @@ const Note = () => {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 10,
-              backgroundColor: 'white',
+              backgroundColor: '#aaa',
+              // backgroundColor: 'white',
             }}
           >
-            <Text>.,;필터</Text>
+            <Filter size={26} color={'black'} />
           </View>
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback
-          onPress={() => {
-            console.log('공유');
-          }}
-        >
+        <TouchableWithoutFeedback onPress={openShare}>
           <View
             style={{
               width: 50,
@@ -404,7 +458,7 @@ const Note = () => {
               backgroundColor: 'white',
             }}
           >
-            <Text>공유</Text>
+            <Share2 size={26} color={'black'} />
           </View>
         </TouchableWithoutFeedback>
         <TouchableWithoutFeedback onPress={handleFocusMode}>
@@ -418,7 +472,7 @@ const Note = () => {
               backgroundColor: 'white',
             }}
           >
-            <Text>포커스</Text>
+            <Fullscreen size={26} color={'black'} />
           </View>
         </TouchableWithoutFeedback>
       </Animated.View>
