@@ -30,6 +30,7 @@ module.exports = {
     "no-console": "warn", // 콘솔 로그 사용 시 경고를 표시합니다.
     "func-names": "off", // 익명 함수에 대한 제한을 비활성화합니다.
     "unused-imports/no-unused-imports": "error",
+    "global-require": "off", // require 사용 허용
     "simple-import-sort/imports": [
       "error",
       {

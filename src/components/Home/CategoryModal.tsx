@@ -7,7 +7,7 @@ import { Info, Plus, SquarePen, Trash2, X } from 'lucide-react-native';
 
 import SwipeItem from '@/components/SwipeItem.tsx';
 import useThemeContext from '@/hooks/useThemeContext.ts';
-import { Category } from '@/types/category.ts';
+import { CategoryGroupType } from '@/types/category.ts';
 import { setData } from '@/utils/storage.ts';
 
 const placeholderData = ['여행', '요리', '쇼핑', '회사', '공부'];
@@ -55,8 +55,8 @@ function CategoryModal({
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  categorys: Category[];
-  setCategorys: React.Dispatch<React.SetStateAction<Category[]>>;
+  categorys: CategoryGroupType[];
+  setCategorys: React.Dispatch<React.SetStateAction<CategoryGroupType[]>>;
 }) {
   const { colors, colorTheme } = useThemeContext();
 
@@ -115,10 +115,10 @@ function CategoryModal({
   };
 
   // 카테고리 수정 폼 열기
-  const onModifyCategory = (id: number, category: string) => {
+  const onModifyCategory = (id: number, categoryName: string) => {
     setUpdateCategoryId(id);
     setIsOpenCategoryForm(true);
-    setCategoryValue(category);
+    setCategoryValue(categoryName);
   };
 
   // 카테고리 추가
@@ -134,7 +134,7 @@ function CategoryModal({
         if (category.id === updateCategoryId) {
           return {
             ...category,
-            category: categoryValue,
+            categoryName: categoryValue,
           };
         }
         return category;
@@ -147,7 +147,7 @@ function CategoryModal({
       setCategoryValue('');
       setUpdateCategoryId(0);
     } else {
-      const isSameCategory = categorys.some((category) => category.category === categoryValue);
+      const isSameCategory = categorys.some((category) => category.categoryName === categoryValue);
 
       if (isSameCategory) {
         Alert.alert('이미 존재하는 카테고리입니다.');
@@ -159,12 +159,13 @@ function CategoryModal({
 
       const check = categorys.length === 0;
 
-      const updateCategorys = [
+      const updateCategorys: CategoryGroupType[] = [
         ...categorys,
         {
           id,
+          categoryName: categoryValue,
           check,
-          category: categoryValue,
+          list: [],
         },
       ];
 
@@ -239,7 +240,7 @@ function CategoryModal({
             keyExtractor={(item, index) => `${item.id}-${index}`}
             renderItem={({ item, drag, isActive }) => {
               return (
-                <ScaleDecorator key={`${item.id}-${item.category}`}>
+                <ScaleDecorator key={`${item.id}-${item.categoryName}`}>
                   <View
                     style={{
                       marginHorizontal: 20,
@@ -252,7 +253,7 @@ function CategoryModal({
                           swipeRef.current[item.id] = ref;
                         }}
                         drag={isDrag}
-                        value={item.category}
+                        value={item.categoryName}
                         check={item.check}
                         // onPress={() => {
                         //   onSelectCategory(item.id);
@@ -279,7 +280,7 @@ function CategoryModal({
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
-                            onPress={() => onModifyCategory(item.id, item.category)}
+                            onPress={() => onModifyCategory(item.id, item.categoryName)}
                           >
                             <SquarePen size={24} color="black" />
                           </TouchableOpacity>

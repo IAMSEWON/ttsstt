@@ -4,9 +4,16 @@ import { CirclePlus, Moon, Sun } from 'lucide-react-native';
 
 import Carousel from '@/components/Home/Carousel.tsx';
 import useThemeContext from '@/hooks/useThemeContext.ts';
-import { Category } from '@/types/category.ts';
+import { CategoryGroupType } from '@/types/category.ts';
 
-function CategoryHeader({ onOpenCategory, categorys }: { onOpenCategory: () => void; categorys: Category[] }) {
+type CategoryHeaderProps = {
+  onOpenCategory: () => void;
+  categorys: CategoryGroupType[];
+  page: number;
+  setPage: (page: number) => void;
+};
+
+function CategoryHeader({ onOpenCategory, categorys, page, setPage }: CategoryHeaderProps) {
   const { colors, colorTheme, setColorTheme } = useThemeContext();
   return (
     <View
@@ -22,7 +29,7 @@ function CategoryHeader({ onOpenCategory, categorys }: { onOpenCategory: () => v
       <Pressable onPress={onOpenCategory}>
         <CirclePlus size={27} color={colors.text} />
       </Pressable>
-      <Carousel data={categorys} />
+      <Carousel data={categorys} page={page} setPage={setPage} />
       <Pressable onPress={() => setColorTheme(colorTheme === 'dark' ? 'light' : 'dark')}>
         {colorTheme === 'dark' ? <Sun size={27} color="white" /> : <Moon size={27} color="black" />}
       </Pressable>

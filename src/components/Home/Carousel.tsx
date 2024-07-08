@@ -3,19 +3,20 @@ import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Text, View } from 'r
 import LinearGradient from 'react-native-linear-gradient';
 
 import useThemeContext from '@/hooks/useThemeContext.ts';
-import { Category } from '@/types/category.ts';
+import { CategoryGroupType } from '@/types/category.ts';
 
 const gap = 16;
 
 const textWidth = 120;
 
 type CarouselProps = {
-  data: Category[];
+  page: number;
+  setPage: (page: number) => void;
+  data: CategoryGroupType[];
 };
 
-function Carousel({ data }: CarouselProps) {
+function Carousel({ data, page, setPage }: CarouselProps) {
   const [listWidth, setListWidth] = useState<number>(0);
-  const [page, setPage] = useState(0);
 
   const { colors } = useThemeContext();
 
@@ -59,7 +60,7 @@ function Carousel({ data }: CarouselProps) {
             >
               <View style={{ flexDirection: 'column', gap: 2 }}>
                 <Text style={[isSelect && { fontWeight: 'bold' }, { fontSize: 21, color: colors.text }]}>
-                  {item.category}
+                  {item.categoryName}
                 </Text>
 
                 <LinearGradient
