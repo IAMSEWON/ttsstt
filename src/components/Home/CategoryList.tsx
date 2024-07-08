@@ -1,8 +1,18 @@
-import React from 'react';
-import { Dimensions, FlatList, Image, Text, View, ViewToken } from 'react-native';
+import React, { useRef, useState } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Text,
+  View,
+  ViewToken,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { SharedValue, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import HomeButton from '@/components/Home/HomeButton.tsx';
 import useThemeContext from '@/hooks/useThemeContext.ts';
 import { CategoryListType } from '@/types/category.ts';
 
@@ -163,9 +173,28 @@ function CategoryItem({ item, viewableItems }: { item: CategoryListType; viewabl
 }
 
 function CategoryList({ list }: { list: CategoryListType[] }) {
+  const { colors } = useThemeContext();
+
   const viewableItems = useSharedValue<ViewToken[]>([]);
 
-  const { colors } = useThemeContext();
+  const [isScroll, setIsScroll] = useState(false);
+
+  // Flatlist 스크롤 초기값
+  const initialScrollY = useRef(0);
+
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (list.length < 1) return;
+
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+
+    if (currentScrollY > initialScrollY.current) {
+      setIsScroll(false);
+    } else if (currentScrollY < initialScrollY.current) {
+      setIsScroll(true);
+    }
+    initialScrollY.current = currentScrollY;
+  };
+
   return (
     <View style={{ flex: 1, paddingHorizontal: 10 }}>
       <FlatList
@@ -177,6 +206,7 @@ function CategoryList({ list }: { list: CategoryListType[] }) {
         onViewableItemsChanged={({ viewableItems: vItems }) => {
           viewableItems.value = vItems;
         }}
+        onScrollBeginDrag={onScroll}
         columnWrapperStyle={{ gap }}
         ListEmptyComponent={
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -186,6 +216,7 @@ function CategoryList({ list }: { list: CategoryListType[] }) {
         }
         renderItem={({ item }) => <CategoryItem item={item} viewableItems={viewableItems} />}
       />
+      <HomeButton colors={colors} isHidden={isScroll} />
     </View>
   );
 }
