@@ -1,6 +1,9 @@
 import React, { ForwardedRef, forwardRef, useState } from 'react';
 import { StyleProp, Text, View, ViewStyle } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Check } from 'lucide-react-native';
+
+import useThemeContext from '@/hooks/useThemeContext.ts';
 
 const SwipeItem = forwardRef(
   (
@@ -23,6 +26,8 @@ const SwipeItem = forwardRef(
     },
     ref: ForwardedRef<Swipeable>,
   ) => {
+    const { colors, colorTheme } = useThemeContext();
+
     const [isSwipe, setIsSwipe] = useState<'left' | 'right' | 'default'>('default');
 
     return (
@@ -51,7 +56,7 @@ const SwipeItem = forwardRef(
             style,
             {
               borderBottomWidth: 1,
-              borderBottomColor: 'white',
+              borderBottomColor: colors.textPlaceholder,
               paddingVertical: 8,
               flexDirection: 'row',
               justifyContent: 'space-between',
@@ -59,19 +64,21 @@ const SwipeItem = forwardRef(
             },
           ]}
         >
-          <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold', marginLeft: 10 }}>{value}</Text>
+          <Text style={{ color: colors.text, fontSize: 30, fontWeight: 'bold', marginLeft: 10 }}>{value}</Text>
           {icon || (
             <View
               style={{
-                backgroundColor: 'white',
+                backgroundColor: check ? colors.text : 'transparent',
                 width: 24,
                 height: 24,
                 marginRight: 10,
+                padding: 4,
+                borderRadius: 2,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <View style={{ width: 16, height: 16, backgroundColor: check ? 'black' : 'transparent' }} />
+              <Check size={17} fontWeight="bold" color={check ? colors.background : 'transparent'} />
             </View>
           )}
         </View>

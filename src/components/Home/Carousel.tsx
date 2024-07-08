@@ -18,7 +18,9 @@ type CarouselProps = {
 function Carousel({ data, page, setPage }: CarouselProps) {
   const [listWidth, setListWidth] = useState<number>(0);
 
-  const { colors } = useThemeContext();
+  const { colors, colorTheme } = useThemeContext();
+
+  const gradientColors = colorTheme === 'light' ? ['#1488CC', '#2B32B2'] : ['#00c3ff', '#ffff1c'];
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const newPage = Math.round(e.nativeEvent.contentOffset.x / (textWidth + gap));
@@ -64,7 +66,7 @@ function Carousel({ data, page, setPage }: CarouselProps) {
                 </Text>
 
                 <LinearGradient
-                  colors={isSelect ? ['#00c3ff', '#ffff1c'] : ['transparent', 'transparent']}
+                  colors={isSelect ? gradientColors : ['transparent', 'transparent']}
                   start={{ x: 0, y: 0 }}
                   style={{ height: 2.5, borderRadius: 100 }}
                 />

@@ -18,7 +18,7 @@ function CategoryHeaderIcon({
   icon,
 }: {
   style?: StyleProp<ViewStyle>;
-  onPress: () => void;
+  onPress?: () => void;
   icon: React.ReactNode;
 }) {
   return (
@@ -58,7 +58,7 @@ function CategoryModal({
   categorys: CategoryGroupType[];
   setCategorys: React.Dispatch<React.SetStateAction<CategoryGroupType[]>>;
 }) {
-  const { colors, colorTheme } = useThemeContext();
+  const { colors } = useThemeContext();
 
   const { top } = useSafeAreaInsets();
 
@@ -197,15 +197,9 @@ function CategoryModal({
           }}
         >
           {/* 모달 카테고리 정보 버튼 */}
-          <CategoryHeaderIcon
-            onPress={() => {}}
-            icon={colorTheme === 'dark' ? <Info size={27} color="white" /> : <Info size={27} color="black" />}
-          />
+          <CategoryHeaderIcon onPress={() => {}} icon={<Info size={27} color={colors.text} />} />
           {/* 모달 카테고리 닫기 버튼 */}
-          <CategoryHeaderIcon
-            onPress={() => setOpen(false)}
-            icon={colorTheme === 'dark' ? <X size={27} color="white" /> : <X size={27} color="black" />}
-          />
+          <CategoryHeaderIcon onPress={() => setOpen(false)} icon={<X size={27} color={colors.text} />} />
         </View>
         {/* 모달 카테고리 추가 버튼 */}
         <View
@@ -219,8 +213,8 @@ function CategoryModal({
               icon={
                 <CategoryHeaderIcon
                   style={{ marginHorizontal: 0, marginVertical: 0 }}
-                  onPress={() => {}}
-                  icon={colorTheme === 'dark' ? <Plus size={27} color="white" /> : <Plus size={27} color="black" />}
+                  onPress={() => setIsOpenCategoryForm(true)}
+                  icon={<Plus size={27} color={colors.text} />}
                 />
               }
             />
@@ -247,7 +241,13 @@ function CategoryModal({
                     }}
                     onStartShouldSetResponder={() => true}
                   >
-                    <TouchableOpacity onLongPress={drag} disabled={isActive}>
+                    <TouchableOpacity
+                      onLongPress={drag}
+                      // onPress={() => {
+                      //   onSelectCategory(item.id);
+                      // }}
+                      disabled={isActive}
+                    >
                       <SwipeItem
                         ref={(ref) => {
                           swipeRef.current[item.id] = ref;
@@ -255,34 +255,31 @@ function CategoryModal({
                         drag={isDrag}
                         value={item.categoryName}
                         check={item.check}
-                        // onPress={() => {
-                        //   onSelectCategory(item.id);
-                        // }}
                         style={{ backgroundColor: colors.background }}
                         leftSide={
                           <TouchableOpacity
                             style={{
                               width: 60,
-                              backgroundColor: 'white',
+                              backgroundColor: colors.opposite,
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                             onPress={() => onDeleteCategory(item.id)}
                           >
-                            <Trash2 size={24} color="black" />
+                            <Trash2 size={24} color={colors.background} />
                           </TouchableOpacity>
                         }
                         rightSide={
                           <TouchableOpacity
                             style={{
                               width: 60,
-                              backgroundColor: 'white',
+                              backgroundColor: colors.opposite,
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                             onPress={() => onModifyCategory(item.id, item.categoryName)}
                           >
-                            <SquarePen size={24} color="black" />
+                            <SquarePen size={24} color={colors.background} />
                           </TouchableOpacity>
                         }
                       />
@@ -316,25 +313,28 @@ function CategoryModal({
             }}
           >
             <CategoryHeaderIcon
-              onPress={() => setIsOpenCategoryForm(false)}
-              icon={colorTheme === 'dark' ? <X size={27} color="white" /> : <X size={27} color="black" />}
+              onPress={() => {
+                setCategoryValue('');
+                setIsOpenCategoryForm(false);
+              }}
+              icon={<X size={27} color={colors.text} />}
             />
           </View>
           <View style={{ flex: 1, alignItems: 'center', gap: 20 }}>
-            <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold' }}>새로운 카테고리 시작</Text>
-            <Text style={{ color: '#f1f3f520', fontSize: 21, fontWeight: 'bold' }}>
+            <Text style={{ color: colors.text, fontSize: 30, fontWeight: 'bold' }}>새로운 카테고리 시작</Text>
+            <Text style={{ color: colors.textPlaceholder, fontSize: 21, fontWeight: 'bold' }}>
               명확하고 간단한 단어를 입력하세요.
             </Text>
             <View style={{ flex: 1, width: 250, marginHorizontal: 40, alignItems: 'center' }}>
               <TextInput
                 ref={inputRef}
-                style={{ fontSize: 30, width: '100%', fontWeight: 'bold', color: 'white', textAlign: 'center' }}
+                style={{ fontSize: 30, width: '100%', fontWeight: 'bold', color: colors.text, textAlign: 'center' }}
                 value={categoryValue}
                 onChangeText={(text) => {
                   setCategoryValue(text.replace(/(\s*)/g, ''));
                 }}
                 placeholder={placeholderData[0]}
-                placeholderTextColor="#f1f3f530"
+                placeholderTextColor={colors.textPlaceholder}
                 returnKeyType="done"
                 autoFocus
                 onSubmitEditing={onAddCategory}
@@ -344,7 +344,7 @@ function CategoryModal({
                   .filter((item, index) => index > 0)
                   .map((item) => {
                     return (
-                      <Text key={item} style={{ fontSize: 30, color: '#f1f3f530', fontWeight: 'bold' }}>
+                      <Text key={item} style={{ fontSize: 30, color: colors.textPlaceholder, fontWeight: 'bold' }}>
                         {item}
                       </Text>
                     );
