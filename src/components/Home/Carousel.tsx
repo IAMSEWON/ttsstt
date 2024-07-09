@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -18,14 +18,27 @@ type CarouselProps = {
 function Carousel({ data, page, setPage }: CarouselProps) {
   const [listWidth, setListWidth] = useState<number>(0);
 
+  const flatListRef = useRef<FlatList>(null);
+
   const { colors, colorTheme } = useThemeContext();
 
   const gradientColors = colorTheme === 'light' ? ['#1488CC', '#2B32B2'] : ['#00c3ff', '#ffff1c'];
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const newPage = Math.round(e.nativeEvent.contentOffset.x / (textWidth + gap));
+
+    console.log('🔥🔥Carousel/onScroll :28 - newPage = ', newPage);
     setPage(newPage);
   };
+
+  useEffect(() => {
+    const findIndex = data.findIndex((item) => item.check === true);
+
+    if (findIndex === -1) return;
+
+    flatListRef.current?.scrollToIndex({ index: findIndex, animated: true, viewOffset: 0, viewPosition: 0.5 });
+    setPage(findIndex);
+  }, [data]);
 
   return (
     <View style={{ flexDirection: 'row', flex: 1 }}>
@@ -33,8 +46,8 @@ function Carousel({ data, page, setPage }: CarouselProps) {
         contentContainerStyle={{
           paddingHorizontal: (listWidth - textWidth - gap) / 2,
           marginHorizontal: 2,
-          paddingTop: 2.5,
         }}
+        ref={flatListRef}
         onLayout={(e) => setListWidth(e.nativeEvent.layout.width)}
         onScroll={onScroll}
         decelerationRate="fast"
@@ -61,7 +74,7 @@ function Carousel({ data, page, setPage }: CarouselProps) {
               ]}
             >
               <View style={{ flexDirection: 'column', gap: 2 }}>
-                <Text style={[isSelect && { fontWeight: 'bold' }, { fontSize: 21, color: colors.text }]}>
+                <Text style={[isSelect && { fontWeight: 'bold' }, { fontSize: 18.5, color: colors.text }]}>
                   {item.categoryName}
                 </Text>
 

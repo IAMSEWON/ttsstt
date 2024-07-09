@@ -1,51 +1,19 @@
 import React, { useRef, useState } from 'react';
-import { Alert, Modal, Pressable, StyleProp, Text, TextInput, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Alert, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import ContextMenu from 'react-native-context-menu-view';
 import { NestableDraggableFlatList, NestableScrollContainer, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { Swipeable } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Info, Plus, SquarePen, Trash2, X } from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { ArrowDownUp, X } from 'lucide-react-native';
 
-import SwipeItem from '@/components/SwipeItem.tsx';
+import CategoryButton from '@/components/Home/CategoryButton.tsx';
+import Icon from '@/components/Icon.tsx';
+import Layout from '@/components/Layout.tsx';
 import useThemeContext from '@/hooks/useThemeContext.ts';
 import { CategoryGroupType } from '@/types/category.ts';
 import { setData } from '@/utils/storage.ts';
 
 const placeholderData = ['여행', '요리', '쇼핑', '회사', '공부'];
-
-function CategoryHeaderIcon({
-  style,
-  onPress,
-  icon,
-}: {
-  style?: StyleProp<ViewStyle>;
-  onPress?: () => void;
-  icon: React.ReactNode;
-}) {
-  return (
-    <View
-      style={[
-        {
-          flexDirection: 'row',
-          marginHorizontal: 4,
-          marginVertical: 8,
-        },
-        style,
-      ]}
-    >
-      <Pressable
-        style={{
-          width: 48,
-          height: 48,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        onPress={onPress}
-      >
-        {icon}
-      </Pressable>
-    </View>
-  );
-}
 
 function CategoryModal({
   open,
@@ -58,11 +26,9 @@ function CategoryModal({
   categorys: CategoryGroupType[];
   setCategorys: React.Dispatch<React.SetStateAction<CategoryGroupType[]>>;
 }) {
-  const { colors } = useThemeContext();
+  const { colors, colorTheme } = useThemeContext();
 
-  const { top } = useSafeAreaInsets();
-
-  const [isDrag, setIsDrag] = useState<boolean>(false);
+  const [isDragAndDrop, setIsDragAndDrop] = useState(false);
 
   const inputRef = useRef<TextInput>(null);
   const swipeRef = useRef<Swipeable[] | null[]>([]);
@@ -72,6 +38,9 @@ function CategoryModal({
   const [categoryValue, setCategoryValue] = useState<string>('');
 
   const [isOpenCategoryForm, setIsOpenCategoryForm] = useState<boolean>(false);
+
+  // 선택한 카테고리 그라디언트 컬러
+  const gradientColors = colorTheme === 'light' ? ['#1488CC', '#2B32B2'] : ['#00c3ff', '#ffff1c'];
 
   // 카테고리 선택
   const onSelectCategory = (id: number) => {
@@ -187,110 +156,103 @@ function CategoryModal({
       }}
       presentationStyle="fullScreen"
     >
-      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: top }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            paddingBottom: 20,
-            paddingHorizontal: 15,
-            justifyContent: 'space-between',
-          }}
-        >
-          {/* 모달 카테고리 정보 버튼 */}
-          <CategoryHeaderIcon onPress={() => {}} icon={<Info size={27} color={colors.text} />} />
-          {/* 모달 카테고리 닫기 버튼 */}
-          <CategoryHeaderIcon onPress={() => setOpen(false)} icon={<X size={27} color={colors.text} />} />
-        </View>
-        {/* 모달 카테고리 추가 버튼 */}
-        <View
-          style={{
-            marginHorizontal: 20,
-          }}
-        >
-          <TouchableOpacity onPress={() => setIsOpenCategoryForm(true)}>
-            <SwipeItem
-              value="새로운 카테고리"
-              icon={
-                <CategoryHeaderIcon
-                  style={{ marginHorizontal: 0, marginVertical: 0 }}
-                  onPress={() => setIsOpenCategoryForm(true)}
-                  icon={<Plus size={27} color={colors.text} />}
-                />
-              }
-            />
-          </TouchableOpacity>
-        </View>
+      <Layout
+        header={
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {/* 모달 카테고리 정렬 버튼 */}
+              <Icon
+                onPress={() => setIsDragAndDrop(!isDragAndDrop)}
+                icon={<ArrowDownUp size={27} color={isDragAndDrop ? 'red' : colors.text} />}
+              />
+            </View>
+            {/* 모달 카테고리 닫기 버튼 */}
+            <Icon onPress={() => setOpen(false)} icon={<X size={27} color={colors.text} />} />
+          </View>
+        }
+      >
         {/* 모달 카테고리 드래그 앤 드랍 리스트 */}
         <NestableScrollContainer>
           <NestableDraggableFlatList
             data={categorys}
-            onDragBegin={() => {
-              setIsDrag(true);
-            }}
-            onDragEnd={({ data }) => {
-              setCategorys(data);
-              setData('categorys', data);
-            }}
+            onDragEnd={
+              isDragAndDrop
+                ? ({ data }) => {
+                    setCategorys(data);
+                    setData('categorys', data);
+                  }
+                : undefined
+            }
             keyExtractor={(item, index) => `${item.id}-${index}`}
             renderItem={({ item, drag, isActive }) => {
               return (
                 <ScaleDecorator key={`${item.id}-${item.categoryName}`}>
-                  <View
-                    style={{
-                      marginHorizontal: 20,
+                  <ContextMenu
+                    actions={[{ title: '수정' }, { title: '삭제' }]}
+                    disabled={isDragAndDrop}
+                    onPress={(e) => {
+                      if (e.nativeEvent.name === '수정') {
+                        onModifyCategory(item.id, item.categoryName);
+                        return;
+                      }
+
+                      if (e.nativeEvent.name === '삭제') {
+                        onDeleteCategory(item.id);
+                      }
                     }}
-                    onStartShouldSetResponder={() => true}
                   >
                     <TouchableOpacity
-                      onLongPress={drag}
-                      // onPress={() => {
-                      //   onSelectCategory(item.id);
-                      // }}
+                      onLongPress={isDragAndDrop ? drag : undefined}
+                      onPress={() => {
+                        onSelectCategory(item.id);
+                      }}
+                      style={{ backgroundColor: colors.background }}
                       disabled={isActive}
                     >
-                      <SwipeItem
-                        ref={(ref) => {
-                          swipeRef.current[item.id] = ref;
-                        }}
-                        drag={isDrag}
-                        value={item.categoryName}
-                        check={item.check}
-                        style={{ backgroundColor: colors.background }}
-                        leftSide={
-                          <TouchableOpacity
+                      <View
+                        style={[
+                          {
+                            alignSelf: 'flex-start',
+                            paddingVertical: 8,
+                            paddingHorizontal: 8,
+                          },
+                        ]}
+                      >
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 2,
+                          }}
+                        >
+                          <Text style={{ color: colors.text, fontSize: 32, fontWeight: 'bold' }}>
+                            {item.categoryName}
+                          </Text>
+                          <Text
                             style={{
-                              width: 60,
-                              backgroundColor: colors.opposite,
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                              color: colors.textPlaceholder,
+                              fontSize: 21,
                             }}
-                            onPress={() => onDeleteCategory(item.id)}
-                          >
-                            <Trash2 size={24} color={colors.background} />
-                          </TouchableOpacity>
-                        }
-                        rightSide={
-                          <TouchableOpacity
-                            style={{
-                              width: 60,
-                              backgroundColor: colors.opposite,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                            onPress={() => onModifyCategory(item.id, item.categoryName)}
-                          >
-                            <SquarePen size={24} color={colors.background} />
-                          </TouchableOpacity>
-                        }
-                      />
+                          >{`(${item.list.length})`}</Text>
+                        </View>
+                        <LinearGradient
+                          colors={item.check ? gradientColors : ['transparent', 'transparent']}
+                          start={{ x: 0, y: 0 }}
+                          style={{ height: 2.5, borderRadius: 100, width: 'auto' }}
+                        />
+                      </View>
                     </TouchableOpacity>
-                  </View>
+                  </ContextMenu>
                 </ScaleDecorator>
               );
             }}
           />
         </NestableScrollContainer>
-      </View>
+      </Layout>
       {/* 모달 카테고리 추가 폼 */}
       <Modal
         animationType="slide"
@@ -312,7 +274,7 @@ function CategoryModal({
               marginVertical: 8,
             }}
           >
-            <CategoryHeaderIcon
+            <Icon
               onPress={() => {
                 setCategoryValue('');
                 setIsOpenCategoryForm(false);
@@ -328,6 +290,7 @@ function CategoryModal({
             <View style={{ flex: 1, width: 250, marginHorizontal: 40, alignItems: 'center' }}>
               <TextInput
                 ref={inputRef}
+                maxLength={12}
                 style={{ fontSize: 30, width: '100%', fontWeight: 'bold', color: colors.text, textAlign: 'center' }}
                 value={categoryValue}
                 onChangeText={(text) => {
@@ -353,6 +316,7 @@ function CategoryModal({
           </View>
         </View>
       </Modal>
+      <CategoryButton colors={colors} onAddPress={() => setIsOpenCategoryForm(true)} />
     </Modal>
   );
 }
