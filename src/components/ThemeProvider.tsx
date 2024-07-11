@@ -1,8 +1,8 @@
 // ThemeProvider.tsx
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { ColorSchemeName } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_ASYNC_STORAGE_KEY = 'THEME_STATE';
 
@@ -31,7 +31,7 @@ export default function ThemeProvider({ children }: Props) {
       setLoading(false);
     };
 
-    void load();
+    load();
   }, []);
 
   // update AsyncStorage when the theme preference changes

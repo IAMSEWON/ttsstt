@@ -1,22 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Text, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 
 import useThemeContext from '@/hooks/useThemeContext.ts';
-import { CategoryGroupType } from '@/types/category.ts';
+import { PermissionType } from '@/types/permission.tsx';
 
 const gap = 16;
 
-const textWidth = 120;
-
 type CarouselProps = {
-  page: number;
-  setPage: (page: number) => void;
-  data: CategoryGroupType[];
+  data: PermissionType[];
+  onSelectItem: (index: number) => void;
 };
 
-function Carousel({ data, page, setPage }: CarouselProps) {
+function Carousel({ data, onSelectItem }: CarouselProps) {
   const [listWidth, setListWidth] = useState<number>(0);
+
+  const [page, setPage] = useState<number>(0);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -25,38 +23,30 @@ function Carousel({ data, page, setPage }: CarouselProps) {
   const gradientColors = colorTheme === 'light' ? ['#1488CC', '#2B32B2'] : ['#00c3ff', '#ffff1c'];
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const newPage = Math.round(e.nativeEvent.contentOffset.x / (textWidth + gap));
+    const newPage = Math.round(e.nativeEvent.contentOffset.x / (listWidth + gap));
 
     const scrollPage = newPage < 0 ? 0 : newPage;
-
+    onSelectItem(scrollPage);
     setPage(scrollPage);
   };
-
-  useEffect(() => {
-    const findIndex = data.findIndex((item) => item.check === true);
-
-    if (findIndex === -1) return;
-
-    flatListRef.current?.scrollToIndex({ index: findIndex, animated: true, viewOffset: 0, viewPosition: 0.5 });
-    setPage(findIndex);
-  }, [data]);
 
   return (
     <View style={{ flexDirection: 'row', flex: 1 }}>
       <FlatList
         contentContainerStyle={{
-          paddingHorizontal: (listWidth - textWidth - gap) / 2,
+          paddingHorizontal: (listWidth - listWidth - gap) / 2,
           marginHorizontal: 2,
+          marginTop: 40,
         }}
         ref={flatListRef}
         onLayout={(e) => setListWidth(e.nativeEvent.layout.width)}
         onScroll={onScroll}
         decelerationRate="fast"
-        snapToInterval={textWidth + gap}
+        snapToInterval={listWidth + gap}
         snapToAlignment="start"
         pagingEnabled
         horizontal
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item) => String(item)}
         data={data}
         renderItem={({ item, index }) => {
           const isSelect = index === page;
@@ -65,25 +55,21 @@ function Carousel({ data, page, setPage }: CarouselProps) {
               style={[
                 {
                   marginHorizontal: gap / 2,
-                  width: textWidth,
+                  width: listWidth,
                   padding: 0,
                   opacity: 0.5,
                   alignItems: 'center',
-                  justifyContent: 'center',
                 },
                 isSelect && { opacity: 1 },
               ]}
             >
-              <View style={{ flexDirection: 'column', gap: 2 }}>
-                <Text style={[isSelect && { fontWeight: 'bold' }, { fontSize: 18.5, color: colors.text }]}>
-                  {item.categoryName}
+              <View style={{ flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+                <Text style={[isSelect && { fontWeight: 'bold' }, { fontSize: 23, color: colors.text }]}>
+                  {item.title}
                 </Text>
-
-                <LinearGradient
-                  colors={isSelect ? gradientColors : ['transparent', 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  style={{ height: 2.5, borderRadius: 100 }}
-                />
+                <Text style={[isSelect && { fontWeight: 'bold' }, { fontSize: 18.5, color: colors.text }]}>
+                  {item.description}
+                </Text>
               </View>
             </View>
           );

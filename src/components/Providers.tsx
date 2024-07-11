@@ -1,9 +1,13 @@
 import React, { ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { DefaultTheme } from '@react-navigation/native';
+
 import ThemeProvider from './ThemeProvider';
 
-const Providers = ({ children }: { children: ReactNode }) => {
+function Providers({ children }: { children: ReactNode }) {
+  console.log('🔥🔥Providers/Providers :10 - DefaultTheme = ', DefaultTheme);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -11,5 +15,5 @@ const Providers = ({ children }: { children: ReactNode }) => {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
-};
+}
 export default Providers;
